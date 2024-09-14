@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class TransactionController extends Controller
@@ -177,7 +178,14 @@ class TransactionController extends Controller
 
         // Shift dates forward by 1 day
         foreach ($existingTransactions as $transaction) {
-            $transaction->transaction_date = $transaction->transaction_date->addDay();
+            $transactionDate = Carbon::parse($transaction->transaction_date)->addDay()->toDateString();
+
+            // Check if the new date is available
+            while (Transaction::where('user_id', $userId)->where('transaction_date', $transactionDate)->exists()) {
+                $transactionDate = Carbon::parse($transactionDate)->addDay()->toDateString();
+            }
+
+            $transaction->transaction_date = $transactionDate;
             $transaction->save();
         }
     }
