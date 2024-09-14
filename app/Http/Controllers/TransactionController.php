@@ -58,7 +58,7 @@ class TransactionController extends Controller
     {
         $type = $request->query('type');
 
-        $query = Transaction::with('product')->where('user_id', Auth::id());
+        $query = Transaction::with('product');
 
         if ($type) {
             $query->where('type', $type);
@@ -70,5 +70,45 @@ class TransactionController extends Controller
             'success' => true,
             'transactions' => $transactions,
         ]);
+    }
+
+    public function update(Request $request, $id)
+    {
+        $transaction = Transaction::findOrFail($id);
+
+        $validated = $request->validate([
+            'product_id' => 'required|exists:products,id',
+            'quantity' => 'required|integer|min:1',
+            'type' => 'required|in:purchase,sale',
+        ]);
+
+        $product = Product::findOrFail($validated['product_id']);
+        $totalAmount = $product->price * $validated['quantity'];
+
+        $transaction->update([
+            'product_id' => $validated['product_id'],
+            'quantity' => $validated['quantity'],
+            'price' => $product->price,
+            'total_amount' => $totalAmount,
+            'type' => $validated['type'],
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Transaction updated successfully.',
+            'transaction' => $transaction->load('product'),
+        ], 200);
+    }
+
+    public function destroy($id)
+    {
+        $transaction = Transaction::findOrFail($id);
+
+        $transaction->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Transaction deleted successfully.'
+        ], 200);
     }
 }
