@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Product;
 use App\Models\Transaction;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
@@ -124,6 +125,8 @@ class APITest extends TestCase
             'product_id' => $product->id,
             'quantity' => 1,
             'price' => $product->price,
+            'total_amount' => $product->price,
+            'transaction_date' => '2023-04-02',
             'type' => 'purchase'
         ]);
 
@@ -132,9 +135,11 @@ class APITest extends TestCase
 
         // Update the transaction
         $response = $this->putJson("/api/transactions/{$transaction->id}", [
+            'product_id' => $product->id,
             'quantity' => $quantity,
             'price' => $price,
-            'transaction_date' => now()->toDateString() 
+            'transaction_date' => '2023-04-02',
+            'type' => 'purchase'
         ], ['Authorization' => "Bearer {$this->token}"]);
 
         $response->dump();
@@ -145,6 +150,7 @@ class APITest extends TestCase
             'id' => $transaction->id,
             'quantity' => $quantity,
             'price' => $price,
+            'total_amount' => $product->price,
         ]);
     }
 
@@ -163,6 +169,8 @@ class APITest extends TestCase
             'product_id' => $product->id,
             'quantity' => 1,
             'price' => $product->price,
+            'total_amount' => $product->price,
+            'transaction_date' => '2023-04-01',
             'type' => 'purchase'
         ]);
 
