@@ -45,6 +45,12 @@
     php artisan serve
     ```
 
+7. **Run Test**:  
+   Run test cases by running:
+
+    ```bash
+    php artisan test
+    ```
 ---
 
 ### **API Routes**
@@ -253,6 +259,13 @@ All transaction-related routes require the user to be authenticated (JWT token).
 ---
 
 ### **Error Handling**
+
+-   **Validation Errors**: If any validation fails (e.g., missing fields), an appropriate error message will be returned with a 422 status.
+-   **Unauthorized Access**: If a request is made to a protected route without a valid JWT token, a 401 Unauthorized response is returned.
+
+---
+
+### **Test Cases**
 
 -   **Validation Errors**: If any validation fails (e.g., missing fields), an appropriate error message will be returned with a 422 status.
 -   **Unauthorized Access**: If a request is made to a protected route without a valid JWT token, a 401 Unauthorized response is returned.
