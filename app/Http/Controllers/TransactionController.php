@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Models\SaleCosting;
 use App\Models\Transaction;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -27,6 +28,8 @@ class TransactionController extends Controller
             ]);
 
             $userId = Auth::id();
+
+            $this->updateInventory($validated['product_id'], $validated['quantity'], $validated['type'], $userId);
 
             $newTransactionDate = $validated['transaction_date'] ?? Carbon::now()->toDateString();
 
@@ -188,5 +191,60 @@ class TransactionController extends Controller
             $transaction->transaction_date = $transactionDate;
             $transaction->save();
         }
+    }
+
+    private function updateInventory($productId, $quantity, $transactionType, $userId)
+    {
+        $saleCosting = SaleCosting::where('user_id', $userId)->first();
+        $product = Product::find($productId);
+
+        if (!$product) {
+            throw new \Exception('Product not found.');
+        }
+
+        if ($transactionType === 'sale' && $product->quantity < $quantity) {
+            throw new \Exception('Not enough quantity available for this sale.');
+        }
+
+        $newQuantity = $quantity;
+        $newValue = $product->price * $quantity;
+
+        if ($saleCosting) { // Perform calculations if Sale Costing exists
+            if ($transactionType === 'purchase') {
+                $newQuantity = $saleCosting->total_quantity + $quantity;
+                $newValue = $saleCosting->total_value + ($product->price * $quantity);
+            } else {
+                // Ensure division by zero will not occur
+                if ($saleCosting->total_quantity > 0) {
+                    $averageCost = $saleCosting->total_value / $saleCosting->total_quantity;
+                } else {
+                    throw new \Exception('Cannot calculate average cost: total quantity is zero.');
+                }
+
+                $totalWAC = $averageCost * $quantity;
+                $newQuantity = $saleCosting->total_quantity - $quantity;
+                $newValue = $saleCosting->total_value - $totalWAC;
+
+                if ($newQuantity < 0) {
+                    throw new \Exception('Not enough inventory to complete the sale.');
+                }
+            }
+        }
+
+        // Wrap in transactions just in case...
+        DB::transaction(function () use ($saleCosting, $product, $transactionType, $quantity, $userId, $newQuantity, $newValue) {
+            SaleCosting::updateOrCreate(['user_id' => $userId], [
+                'total_quantity' => $newQuantity,
+                'total_value' => $newValue,
+            ]);
+
+            if ($transactionType === 'sale') {
+                $product->quantity = $product->quantity - $quantity;
+            } else {
+                $product->quantity = $product->quantity + $quantity;
+            }
+
+            $product->save();
+        });
     }
 }
