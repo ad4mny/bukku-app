@@ -262,10 +262,3 @@ All transaction-related routes require the user to be authenticated (JWT token).
 
 -   **Validation Errors**: If any validation fails (e.g., missing fields), an appropriate error message will be returned with a 422 status.
 -   **Unauthorized Access**: If a request is made to a protected route without a valid JWT token, a 401 Unauthorized response is returned.
-
----
-
-### **Test Cases**
-
--   **Validation Errors**: If any validation fails (e.g., missing fields), an appropriate error message will be returned with a 422 status.
--   **Unauthorized Access**: If a request is made to a protected route without a valid JWT token, a 401 Unauthorized response is returned.
