@@ -1,66 +1,258 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+### Documentation for Laravel RESTful API (JWT Auth + Purchase/Sale Transactions)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+---
 
-## About Laravel
+### **Steps to Set Up the Project**
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+1. **Install Dependencies**:  
+   Run the following command to install all necessary packages after cloning the project:
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+    ```bash
+    composer install
+    ```
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+2. **Set up `.env`**:  
+   Copy the `.env.example` file to `.env` and configure your database credentials:
 
-## Learning Laravel
+    ```bash
+    cp .env.example .env
+    ```
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+3. **Run Migrations**:  
+   Create the database tables by running:
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+    ```bash
+    php artisan migrate
+    ```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+4. **Seed the Products Table**:  
+   Insert sample data into the `products` table using the `ProductSeeder`:
 
-## Laravel Sponsors
+    ```bash
+    php artisan db:seed --class=ProductSeeder
+    ```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+5. **Generate JWT Secret Key**:  
+   The app uses JWT for authentication, so generate the secret key for JWT:
 
-### Premium Partners
+    ```bash
+    php artisan jwt:secret
+    ```
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+6. **Run the Application**:  
+   Start the Laravel development server:
+    ```bash
+    php artisan serve
+    ```
 
-## Contributing
+---
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### **API Routes**
 
-## Code of Conduct
+The API has been developed using Laravel with JWT-based authentication and follows RESTful principles.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+#### **Auth Routes**:
 
-## Security Vulnerabilities
+1. **Register a New User**:
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+    ```http
+    POST /api/register
+    ```
 
-## License
+    - **Request Body**:
+        ```json
+        {
+            "name": "John Doe",
+            "email": "john@example.com",
+            "password": "password123"
+        }
+        ```
+    - **Response**:
+        - **Success**:
+            ```json
+            {
+                "message": "User successfully registered",
+                "token": "JWT_TOKEN"
+            }
+            ```
+        - **Failure**: Validation errors or if email already exists.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+2. **Login**:
+
+    ```http
+    POST /api/login
+    ```
+
+    - **Request Body**:
+        ```json
+        {
+            "email": "john@example.com",
+            "password": "password123"
+        }
+        ```
+    - **Response**:
+        - **Success**:
+            ```json
+            {
+                "message": "Login successful",
+                "token": "JWT_TOKEN"
+            }
+            ```
+        - **Failure**: Invalid credentials or missing fields.
+
+3. **Logout** (Authenticated):
+    ```http
+    POST /api/logout
+    ```
+    - Requires the **JWT token** in the `Authorization` header.
+    - **Response**:
+        ```json
+        {
+            "message": "User successfully logged out"
+        }
+        ```
+
+---
+
+#### **Transaction Routes** (Authenticated):
+
+All transaction-related routes require the user to be authenticated (JWT token).
+
+1. **Record a New Transaction**:
+
+    ```http
+    POST /api/transactions
+    ```
+
+    - **Request Body**:
+        ```json
+        {
+            "product_id": 1,
+            "quantity": 10,
+            "price": 2.0,
+            "type": "purchase", // or "sale"
+            "transaction_date": "2024-09-14" // Optional
+        }
+        ```
+    - **Description**:
+        - **Purchase**: Adds new inventory and updates cost.
+        - **Sale**: Deducts inventory, calculates the **Cost of Goods Sold (COGS)** based on the **Weighted Average Cost (WAC)**, and records the sale.
+    - **Response**:
+        ```json
+        {
+            "message": "Transaction recorded successfully"
+        }
+        ```
+
+2. **List All Transactions**:
+
+    ```http
+    GET /api/transactions
+    ```
+
+    - **Optional Query Parameters**:
+        - `type`: Filter by transaction type (either "purchase" or "sale").
+    - **Response**:
+        - Example:
+            ```json
+            [
+              {
+                "id": 1,
+                "product_id": 1,
+                "quantity": 10,
+                "price": 2.00,
+                "type": "purchase",
+                "transaction_date": "2024-09-14",
+                "created_at": "2024-09-14T08:00:00.000Z",
+                "updated_at": "2024-09-14T08:00:00.000Z"
+              },
+              ...
+            ]
+            ```
+
+3. **Update a Transaction**:
+
+    ```http
+    PUT /api/transactions/{id}
+    ```
+
+    - **Request Body**:
+        ```json
+        {
+            "quantity": 15,
+            "price": 2.5,
+            "transaction_date": "2024-09-15"
+        }
+        ```
+    - **Response**:
+        ```json
+        {
+            "message": "Transaction updated successfully"
+        }
+        ```
+
+4. **Delete a Transaction**:
+    ```http
+    DELETE /api/transactions/{id}
+    ```
+    - **Response**:
+        ```json
+        {
+            "message": "Transaction deleted successfully"
+        }
+        ```
+
+---
+
+### **Middleware**
+
+-   **JWT Authentication**: All routes under `auth:api` middleware require a valid JWT token to access.
+
+---
+
+### **Tables & Data Structure**
+
+1. **Users Table**:
+
+    - Stores user information (used for registration, login, etc.).
+
+2. **Products Table**:
+
+    - Seeded with sample data using `ProductSeeder`. Each product has a unique `id`, `name`, `total_quantity`, and `total_value`.
+
+3. **Transactions Table**:
+
+    - Stores transaction data for both purchases and sales.
+    - Fields: `id`, `user_id`, `product_id`, `quantity`, `price`, `transaction_date`, `type` (either "purchase" or "sale").
+
+4. **Costings Table**:
+    - Tracks the total inventory quantity and the **Weighted Average Cost (WAC)** for each product.
+    - Fields: `id`, `product_id`, `quantity`, `total_value`, `unit_cost`.
+
+---
+
+### **Logic Summary**
+
+-   **Weighted Average Cost (WAC)**: The `costings` table updates with each purchase to calculate and store the WAC for each product.
+-   **Cost of Goods Sold (COGS)**: For sales, COGS is calculated based on the current WAC from the `costings` table.
+-   **Date Adjustments**: Transaction dates are adjusted dynamically to maintain sequence when a new transaction is inserted with a date that affects the existing sequence.
+
+---
+
+### **JWT Token Management**
+
+-   Upon successful **login**, a JWT token is returned, which should be included in all subsequent requests as a Bearer token:
+
+    -   Example:
+        ```
+        Authorization: Bearer JWT_TOKEN
+        ```
+
+-   **Logout**: To invalidate the token, simply call the `logout` endpoint.
+
+---
+
+### **Error Handling**
+
+-   **Validation Errors**: If any validation fails (e.g., missing fields), an appropriate error message will be returned with a 422 status.
+-   **Unauthorized Access**: If a request is made to a protected route without a valid JWT token, a 401 Unauthorized response is returned.
